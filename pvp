@@ -1,0 +1,115 @@
+#!/bin/sh
+#
+# PvP - The Ultimate Python virtualenv and Pip Manager
+#
+# Usage: pvp <command> ...
+# See 'pvp help' for more info.
+#
+# Copyright (C) 2021 Senko Rasic <senko@senko.net>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the “Software”),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+
+set -e
+
+VENV_DIR=".venv"
+CMD="$1"
+
+test -z "$CMD" || shift
+
+show_help() {
+    echo "PvP - The Ultimate Python Virtualenv and Package Manager"
+    echo "Usage:"
+    echo "  pvp init - initialize a new Python virtual environment under current directory"
+    echo "  pvp add  - install package(s)"
+    echo "  pvp rm   - remove package(s)"
+    echo "  pvp run  - run a command within a Python virtual environment"
+    echo "  pvp list - list installed packages"
+    echo "  pvp find - find a Python virtual environment for this or parent directories"
+}
+
+find_venv() {
+    local dir="${1:-$PWD}"
+    if test -f "$dir/$VENV_DIR/bin/activate"; then
+        echo "$dir/$VENV_DIR"
+        return 0
+    fi
+    local parent="$(dirname $dir)"
+    if test "$parent" = "/"; then
+        return 1
+    fi
+    find_venv "$parent"
+}
+
+init_venv() {
+    local py="${PYTHON:-python3}"
+
+    if ! test -z "$VIRTUAL_ENV"; then
+        echo "Python virtual environment '$VIRTUAL_ENV' already activated."
+        exit 1
+    fi
+
+    local venv="$(find_venv)"
+    if ! test -z "$venv"; then
+        echo "Python virtual environment '$venv' already exists. You can activate it with 'pvp'"
+        exit 1
+    fi
+
+    "$py" -m venv "$VENV_DIR"
+    "$VENV_DIR/bin/python" -m pip install -U pip
+
+    echo "New Python virtual environment created in $PWD/$VENV_DIR"
+    echo "You can activate it with: 'pvp'"
+}
+
+venv_run() {
+    local venv="${VIRTUAL_ENV:-$(find_venv)}"
+    if test -z "$venv"; then
+        echo "No Python virtual environment found. You can create it with 'pvp init'"
+        exit 1
+    fi
+    exec "$venv/bin/python" $@
+}
+
+case "$CMD" in
+    init)
+        init_venv
+        ;;
+    find)
+        find_venv
+        ;;
+    help)
+        show_help
+        ;;
+    run)
+        venv_run $@
+        ;;
+    add|install)
+        venv_run -m pip install $@
+        ;;
+    rm|remove)
+        venv_run -m pip uninstall $@
+        ;;
+    list|freeze)
+        venv_run -m pip freeze
+        ;;
+    *)
+        echo "Usage: $0 <command> ..."
+        echo "Try: '$0 help' for more info"
+        exit 1
+esac

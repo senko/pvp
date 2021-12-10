@@ -1,0 +1,32 @@
+# Add the following to your ~/.bashrc (or ~/.zshrc if you're using ZSH).
+#
+# This needs to run in the context of the current shell to be able to source
+# the virtualenv activate code. For all other usage, it runs the pvp
+# command.
+#
+# For this to work, pvp must be installed somewhere in your $PATH (see README.md).
+
+pvp() {
+  local pvp="$(which pvp)"
+  if test -z "$pvp"; then
+    echo "PvP not properly installed (not found in \$PATH)"
+    return 1
+  fi
+
+  if ! test -z "$1"; then $pvp $@; return; fi
+
+  if ! test -z "$VIRTUAL_ENV"; then
+     echo "Already in Python virtual environment: $VIRTUAL_ENV"
+     return 1
+  fi
+
+  local venv="$($pvp find)"
+    if test -z "$venv"; then
+    echo "No Python virtual environment found. Create one with 'pvp init'"
+    return 1
+  fi
+
+  echo "Activating Python virtual environment $venv"
+  . "$venv/bin/activate"
+}
+
