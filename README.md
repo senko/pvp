@@ -103,11 +103,11 @@ I've just got two rules:
 Listen, I understand. I really do. Have you tried using
 [pipenv](https://github.com/pypa/pipenv),
 [Poetry](https://python-poetry.org/),
-[conda]https://anaconda.org/anaconda/python,
+[conda](https://anaconda.org/anaconda/python),
 [PDM](https://pdm.fming.dev/),
 [homebrew](https://docs.brew.sh/Homebrew-and-Python#python-3x),
 [apt](https://packages.ubuntu.com/search?keywords=python&searchon=names&suite=impish&section=all),
-[rpm],
+rpm,
 or writing your own?
 
 It's really a rite-of-passage for every serious Python
